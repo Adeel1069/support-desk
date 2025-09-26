@@ -1,0 +1,112 @@
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+// User Model (with Roles)
+model User {
+  id String @id @default(uuid())
+  email String @unique
+  clerkId String
+  name String?
+  role Role @default(USER)
+  emailVerified Boolean @default(false)
+  image String?
+  comments Comment[]
+  tickets Ticket[] @relation("CreatedTickets")  // created by this user
+  assignedTickets Ticket[] @relation("AssignedTickets") // assigned to this user
+  assignedByTickets Ticket[] @relation("AssignedBy")  // tickets assigned by user
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Category Model
+model Category {
+  id String @id @default(uuid())
+  name String @unique
+  tickets Ticket[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+// Ticket Model
+model Ticket {
+  id String @id @default(uuid())
+  subject String 
+  description String 
+  status TicketStatus @default(OPEN)
+  comments Comment[]
+  attachments Attachment[]
+  
+  // Relation to user model
+  createdById String
+  createdBy User @relation("CreatedTickets",fields: [createdById], references: [id], onDelete: Cascade)
+
+  assignedToId String?
+  assignedTo User? @relation("AssignedTickets",fields: [assignedToId], references: [id])
+
+  assignedById String?
+  assignedBy User? @relation("AssignedBy",fields: [assignedById], references: [id])
+  
+  // Relation to category model
+  categoryId String?
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull )
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+// Comment Model
+
+model Comment {
+  id String @id @default(uuid())
+  content String
+  userId String
+  user User @relation(fields: [userId], references: [id])
+  ticketId String
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Attachment Model
+model Attachment {
+  id String @id @default(uuid())
+  fileName String?
+  url String
+  ticketId String
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+
+enum Role {
+  USER    // Regular user
+  AGENT   // Agent or Support staff
+  ADMIN   // Super admin
+}
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+  ARCHIVED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
