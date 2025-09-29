@@ -7,22 +7,30 @@ import {
   UserButton,
 } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
+import { SidebarTrigger } from "./ui/sidebar";
 
 const Navbar = async () => {
   const { isAuthenticated } = await auth();
   if (isAuthenticated) await syncUser(); // To sync a Clerk user with our database
 
   return (
-    <header className="flex justify-end items-center p-4 gap-4 h-16">
-      <SignedOut>
-        <SignInButton />
-        <SignUpButton>
-          <button>Sign Up</button>
-        </SignUpButton>
-      </SignedOut>
-      <SignedIn>
-        <UserButton />
-      </SignedIn>
+    <header className="flex justify-between items-center p-3 border-b">
+      {isAuthenticated ? (
+        <SidebarTrigger className="hover:cursor-pointer" />
+      ) : (
+        <div>Logo</div>
+      )}
+      <section className="flex items-center gap-5">
+        <SignedOut>
+          <SignInButton />
+          <SignUpButton>
+            <button>Sign Up</button>
+          </SignUpButton>
+        </SignedOut>
+        <SignedIn>
+          <UserButton />
+        </SignedIn>
+      </section>
     </header>
   );
 };
