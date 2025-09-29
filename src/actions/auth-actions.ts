@@ -2,7 +2,7 @@
 
 import { User } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
-import { currentUser } from "@clerk/nextjs/server";
+import { auth, currentUser } from "@clerk/nextjs/server";
 
 type ResponseType = {
   success: boolean;
@@ -56,8 +56,8 @@ export async function syncUser(): Promise<User | null> {
 export async function getCurrentUser(): Promise<ResponseType> {
   try {
     // Ensure user is authenticated
-    const clerkUser = await currentUser();
-    if (!clerkUser) {
+    const { userId } = await auth();
+    if (!userId) {
       return {
         success: false,
         message: "User is not authenticated",
@@ -66,7 +66,7 @@ export async function getCurrentUser(): Promise<ResponseType> {
 
     const user = await prisma.user.findUnique({
       where: {
-        clerkId: clerkUser.id,
+        clerkId: userId,
       },
     });
     return {

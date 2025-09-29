@@ -40,3 +40,21 @@ npx prisma generate // To generate prisma client
 
 npx prisma studio // For prisma studio
 ```
+
+## Rules
+
+### Public and Private routes rules:
+
+#### Public routes
+
+- Whenever you create a new public route (e.g., /sign-in), add it to the publicRoutes array in constants.ts.
+- This ensures consistent handling of routes that do not require authentication.
+
+#### Private routes
+
+- Private routes must always be defined under the appropriate role-based prefix:
+  - /user/dashboard/... → for regular users
+  - /agent/dashboard/... → for agents/staff
+  - /admin/dashboard/... → for administrators
+- When adding a new private route, ensure it is placed under the correct role-based prefix
+- Avoid mixing roles — each route must clearly belong to a single role.
