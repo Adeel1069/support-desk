@@ -20,9 +20,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Support Desk",
   description: "Scalable and adaptable support management system",
-  icons: {
-    icon: "/favicon.svg",
-  },
 };
 
 export default async function RootLayout({

@@ -16,12 +16,8 @@ const Navbar = async () => {
   if (isAuthenticated) await syncUser(); // To sync a Clerk user with our database
 
   return (
-    <header className="flex justify-between items-center border-b border-gray-100 p-3 px-3 md:px-5 lg:px-10">
-      {isAuthenticated ? (
-        <SidebarTrigger className="hover:cursor-pointer" />
-      ) : (
-        <Logo />
-      )}
+    <header className="flex justify-between items-center border-b border-gray-100 p-3 pr-3 md:pr-5 lg:pr-10">
+      {isAuthenticated ? <SidebarTrigger /> : <Logo />}
       <section className="flex items-center gap-5">
         <SignedOut>
           <SignInButton>

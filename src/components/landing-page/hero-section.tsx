@@ -18,7 +18,7 @@ const HeroSection = () => {
             <SignInButton>
               <Button size="lg">Log In</Button>
             </SignInButton>
-            <Button asChild size="lg" variant="outline">
+            <Button size="lg" variant="outline">
               <Link href="/user/dashboard">Create a Ticket</Link>
             </Button>
           </div>

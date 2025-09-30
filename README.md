@@ -2,6 +2,10 @@
 
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Landing Page Demo
+
+![Demo Screenshot](.github/assets/landing-page-demo.png)
+
 ## How To Run
 
 To run this project locally, follow these steps:
