@@ -1,15 +1,7 @@
-import { getCurrentUser } from "@/actions/auth-actions";
-import { currentUser } from "@clerk/nextjs/server";
+import LandingPage from "./landing-page";
 
 const HomePage = async () => {
-  const user = await currentUser();
-
-  if (!user) {
-    return <h1>Please login to continue</h1>;
-  }
-
-  const { success, data } = await getCurrentUser();
-  if (success && data) return <h1>Welcome {data.name} to Support Desk</h1>;
+  return <LandingPage />;
 };
 
 export default HomePage;

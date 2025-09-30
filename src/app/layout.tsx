@@ -20,6 +20,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Support Desk",
   description: "Scalable and adaptable support management system",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default async function RootLayout({
@@ -41,7 +44,7 @@ export default async function RootLayout({
             <main className="w-full">
               {/* Custom navbar with shadcn SidebarTrigger */}
               <Navbar />
-              <main className="p-4">{children}</main>
+              <main>{children}</main>
             </main>
           </SidebarProvider>
         </body>
