@@ -1,10 +1,13 @@
 # Support Desk Application
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Support Desk is a modern web application designed to manage customer support tickets efficiently.
+It provides a complete workflow for users, agents, and admins to create, track, and resolve issues with ease.
 
-## Landing Page Demo
+This project is built as part of enhancing my backend and full-stack skills, leveraging [Next.js](https://nextjs.org), Prisma, PostgreSQL with Neon, and Clerk while combining my frontend expertise with real-world backend concepts.
 
-![Demo Screenshot](.github/assets/landing-page-demo.png)
+## Landing Page:
+
+![Demo Screenshot](.github/assets/landing-page-demo2.png)
 
 ## How To Run
 

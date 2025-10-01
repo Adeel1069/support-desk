@@ -3,21 +3,27 @@
 import { Ticket } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "./auth-actions";
+import { revalidatePath } from "next/cache";
 
 // Create Ticket action
-export async function createTicket(formData: FormData): Promise<{
+export async function createTicket({
+  subject,
+  description,
+  category,
+}: {
+  subject: string;
+  description: string;
+  category: string;
+}): Promise<{
   success: boolean;
   message: string;
   data?: Ticket | null;
 }> {
   try {
-    const subject = formData.get("subject");
-    const description = formData.get("description");
-
-    if (!subject || !description) {
+    if (!subject || !description || !category) {
       return {
         success: false,
-        message: "Both fields (subject and description) are required",
+        message: "All fields are required",
       };
     }
 
@@ -36,6 +42,7 @@ export async function createTicket(formData: FormData): Promise<{
         createdById: user.id,
       },
     });
+    revalidatePath(`/${user.role.toLowerCase()}/tickets`);
     return {
       success: true,
       message: "Ticket has been created successfully.",

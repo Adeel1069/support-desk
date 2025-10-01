@@ -16,7 +16,7 @@ import Image from "next/image";
 export function AppSidebar({ user }: { user: User }) {
   const menuItems = getSidebarMenu(user.role);
   return (
-    <Sidebar>
+    <Sidebar variant="sidebar">
       <SidebarHeader className="mt-2">
         <Logo />
       </SidebarHeader>
@@ -38,9 +38,9 @@ export function AppSidebar({ user }: { user: User }) {
         <Image
           src="/logo.svg"
           alt="logo"
-          width={200}
-          height={200}
-          className="opacity-50"
+          width={120}
+          height={120}
+          className="opacity-40"
         />
       </SidebarFooter>
     </Sidebar>

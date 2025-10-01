@@ -1,4 +1,4 @@
-import { Home, Layers, Ticket, Users } from "lucide-react";
+import { HelpCircle, Home, Layers, Ticket, Users } from "lucide-react";
 import { Role } from "@/generated/prisma";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -21,6 +21,7 @@ const sidebarMenuConfig = {
   [Role.USER]: [
     { title: "Dashboard", url: "/user/dashboard", icon: Home },
     { title: "My Tickets", url: "/user/tickets", icon: Ticket },
+    { title: "Help", url: "/user/help", icon: HelpCircle },
   ],
 };
 
