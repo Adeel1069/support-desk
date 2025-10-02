@@ -79,11 +79,7 @@ export async function getCategories(): Promise<{
 }
 
 // Get single category action
-export async function getCategoryById({
-  categoryId,
-}: {
-  categoryId: string;
-}): Promise<{
+export async function getCategoryById(categoryId: string): Promise<{
   success: boolean;
   message: string;
   data?: Category | null;

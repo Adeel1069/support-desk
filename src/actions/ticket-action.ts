@@ -1,45 +1,54 @@
 "use server";
 
-import { Ticket } from "@/generated/prisma";
+import { Prisma, Ticket, TicketPriority } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "./auth-actions";
 import { revalidatePath } from "next/cache";
+
+type TicketWithRelations = Prisma.TicketGetPayload<{
+  include: {
+    createdBy: true;
+    assignedTo: true;
+    assignedBy: true;
+    category: true;
+    comments: { include: { user: true } };
+    attachments: true;
+  };
+}>;
 
 // Create Ticket action
 export async function createTicket({
   subject,
   description,
   category,
+  priority,
 }: {
   subject: string;
   description: string;
   category: string;
+  priority: TicketPriority;
 }): Promise<{
   success: boolean;
   message: string;
   data?: Ticket | null;
 }> {
   try {
-    if (!subject || !description || !category) {
-      return {
-        success: false,
-        message: "All fields are required",
-      };
+    if (!subject || !description || !category || !priority) {
+      throw new Error("All fields are required");
     }
 
     const { success, data: user } = await getCurrentUser();
     if (!success || !user || !user.id) {
-      return {
-        success: false,
-        message: "Unauthenticated",
-      };
+      throw new Error("Unauthenticated");
     }
 
     const ticket = await prisma.ticket.create({
       data: {
-        subject: subject.toString(),
-        description: description?.toString(),
+        subject: subject,
+        description: description,
         createdById: user.id,
+        categoryId: category,
+        priority,
       },
     });
     revalidatePath(`/${user.role.toLowerCase()}/tickets`);
@@ -49,13 +58,11 @@ export async function createTicket({
       data: ticket,
     };
   } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Error occurred while creating ticket",
-    };
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "Error occurred while creating ticket"
+    );
   }
 }
 
@@ -95,25 +102,29 @@ export async function getTickets(): Promise<{
 }
 
 // Get single ticket action
-export async function getTicketById({
-  ticketId,
-}: {
-  ticketId: string;
-}): Promise<{
+export async function getTicketById(ticketId?: string): Promise<{
   success: boolean;
   message: string;
-  data?: Ticket | null;
+  data?: TicketWithRelations | null;
 }> {
   try {
     if (!ticketId) {
-      return {
-        success: false,
-        message: "ticketId is required",
-      };
+      throw new Error("Ticket Id is required.");
     }
     const ticket = await prisma.ticket.findUnique({
       where: {
         id: ticketId,
+      },
+      include: {
+        createdBy: true,
+        assignedTo: true,
+        assignedBy: true,
+        category: true,
+        comments: {
+          include: { user: true },
+          orderBy: { createdAt: "asc" },
+        },
+        attachments: true,
       },
     });
     return {
@@ -122,54 +133,70 @@ export async function getTicketById({
       data: ticket,
     };
   } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Error occurred while fetching ticket",
-    };
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "Error occurred while updating ticket"
+    );
   }
 }
 
 // Update single ticket action
-export async function updateTicketById(formData: FormData): Promise<{
+export async function updateTicketById({
+  subject,
+  description,
+  category,
+  priority,
+  ticketId,
+}: {
+  subject: string;
+  description: string;
+  category: string;
+  priority: TicketPriority;
+  ticketId: string;
+}): Promise<{
   success: boolean;
   message: string;
   data?: Ticket | null;
 }> {
   try {
-    const subject = formData.get("subject");
-    const description = formData.get("description");
-    const ticketId = formData.get("ticketId");
-    if (!ticketId) {
-      return {
-        success: false,
-        message: "ticketId is required",
-      };
+    if (!subject || !description || !category || !priority) {
+      throw new Error("All fields are required");
     }
+
+    const { success, data: user } = await getCurrentUser();
+    if (!success || !user || !user.id) {
+      throw new Error("Unauthenticated");
+    }
+    if (!ticketId) {
+      throw new Error("Ticket Id is required.");
+    }
+
     const ticket = await prisma.ticket.update({
       where: {
         id: ticketId.toString(),
       },
       data: {
-        subject: subject?.toString(),
-        description: description?.toString(),
+        subject: subject,
+        description: description,
+        createdById: user.id,
+        categoryId: category,
+        priority,
       },
     });
+    revalidatePath(`/${user.role.toLowerCase()}/tickets`);
+    revalidatePath(`/${user.role.toLowerCase()}/tickets/${ticketId}`);
     return {
       success: true,
-      message: "Ticket has been updated",
+      message: "Ticket updated successfully",
       data: ticket,
     };
   } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Error occurred while updating ticket",
-    };
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "Error occurred while updating ticket"
+    );
   }
 }
 

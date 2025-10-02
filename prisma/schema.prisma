@@ -43,6 +43,7 @@ model Ticket {
   subject String 
   description String 
   status TicketStatus @default(OPEN)
+  priority TicketPriority @default(LOW)
   comments Comment[]
   attachments Attachment[]
   
@@ -108,4 +109,5 @@ enum TicketPriority {
   LOW
   MEDIUM
   HIGH
+  CRITICAL
 }

@@ -32,16 +32,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createTicket } from "@/actions/ticket-action";
+import { createTicket, updateTicketById } from "@/actions/ticket-action";
 import { toast } from "sonner";
 import { useState } from "react";
-import { Category } from "@/generated/prisma";
-
-const priorities = [
-  { value: "LOW", label: "Low" },
-  { value: "MEDIUM", label: "Medium" },
-  { value: "HIGH", label: "High" },
-];
+import { Category, Ticket, TicketPriority } from "@/generated/prisma";
+import { priorities } from "@/lib/constants";
 
 const formSchema = z.object({
   subject: z
@@ -56,37 +51,47 @@ const formSchema = z.object({
     .nonempty({ message: "Description is required" })
     .min(3)
     .max(500),
-  category: z.string(),
-  priority: z.string().nonempty({ message: "Priority is required" }),
+  category: z.string().nonempty({ message: "Category is required" }),
+  priority: z.enum(TicketPriority),
 });
 
-export function CreateTicket({ categories }: { categories: Category[] }) {
+export function CreateTicket({
+  categories,
+  editMode = false,
+  ticket,
+}: {
+  editMode: boolean;
+  ticket?: Ticket;
+  categories: Category[];
+}) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      subject: "",
-      description: "",
-      category: "",
-      priority: "",
+      subject: ticket?.subject || "",
+      description: ticket?.description || "",
+      category: ticket?.categoryId || "",
+      priority: ticket?.priority || priorities[0].value,
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setLoading(true);
-    const promise = createTicket(values);
+    const promise = editMode
+      ? updateTicketById({ ...values, ticketId: ticket?.id || "" })
+      : createTicket(values);
     toast.promise(promise, {
-      loading: "Creating ticket...",
+      loading: editMode ? "Updating ticket..." : "Creating ticket...",
       success: (data) => {
         setLoading(false);
         setOpen(false);
         form.reset();
         return data?.message;
       },
-      error: (data) => {
+      error: (err) => {
         setLoading(false);
-        return data?.message;
+        return err.message || "Unknown error";
       },
     });
   };
@@ -95,19 +100,22 @@ export function CreateTicket({ categories }: { categories: Category[] }) {
     <Dialog
       open={open}
       onOpenChange={(isOpen) => {
-        if (!loading) setOpen(isOpen);
+        if (!loading) setOpen(isOpen); // To prevent closing modal while form is being submitting
         if (!isOpen) form.reset();
       }}
     >
       <DialogTrigger asChild>
-        <Button>New Ticket</Button>
+        <Button>{editMode ? "Update Ticket" : "New Ticket"}</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px] md:max-w-[580px]">
         <DialogHeader>
-          <DialogTitle>Create Ticket</DialogTitle>
+          <DialogTitle>
+            {editMode ? "Update Ticket" : "Create Ticket"}
+          </DialogTitle>
           <DialogDescription>
-            Fill out the form below to submit a new ticket. All fields with{" "}
-            <span className="text-destructive">*</span> are required.
+            Fill out the form below to{" "}
+            {editMode ? "update a ticket" : "submit a new ticket"} . All fields
+            with <span className="text-destructive">*</span> are required.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -147,7 +155,9 @@ export function CreateTicket({ categories }: { categories: Category[] }) {
               name="category"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Category</FormLabel>
+                  <FormLabel>
+                    Category <span className="text-destructive">*</span>
+                  </FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -159,7 +169,7 @@ export function CreateTicket({ categories }: { categories: Category[] }) {
                     </FormControl>
                     <SelectContent>
                       {categories?.map((category) => (
-                        <SelectItem key={category.id} value={category.name}>
+                        <SelectItem key={category.id} value={category.id}>
                           {category.name}
                         </SelectItem>
                       ))}
@@ -174,7 +184,9 @@ export function CreateTicket({ categories }: { categories: Category[] }) {
               name="priority"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Priority</FormLabel>
+                  <FormLabel>
+                    Priority <span className="text-destructive">*</span>
+                  </FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}

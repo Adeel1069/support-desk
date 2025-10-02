@@ -6,7 +6,7 @@ const Header = async ({ title }: { title: string }) => {
   return (
     <div className="flex justify-between items-center">
       <h1 className="text-2xl font-bold">{title}</h1>
-      <CreateTicket categories={categories || []} />
+      <CreateTicket categories={categories || []} editMode={false} />
     </div>
   );
 };

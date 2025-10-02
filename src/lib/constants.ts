@@ -8,3 +8,10 @@ export const protectedPreFixes = {
   agent: "/agent",
   admin: "/admin",
 };
+
+export const priorities = [
+  { value: "LOW", label: "Low" },
+  { value: "MEDIUM", label: "Medium" },
+  { value: "HIGH", label: "High" },
+  { value: "CRITICAL", label: "Critical" },
+] as const;
