@@ -5,52 +5,37 @@ import { getCurrentUser } from "./auth-actions";
 import { Role } from "@/generated/prisma";
 
 import { Category } from "@/generated/prisma";
+import { revalidatePath } from "next/cache";
 
 // Create category action - only admin can create.
-export async function createCategory(payload: Category): Promise<{
+export async function createCategory({ name }: { name: string }): Promise<{
   success: boolean;
   message: string;
   data?: Category | null;
 }> {
   try {
-    const { name } = payload;
-    if (!name) {
-      return {
-        success: false,
-        message: "Name field is required",
-      };
-    }
+    if (!name) throw new Error("Category name is required.");
+
     const user = await getCurrentUser();
-    if (!user.success) {
-      return {
-        success: false,
-        message: "Authentication Error",
-      };
-    }
-    if (user.data?.role !== Role.ADMIN) {
-      return {
-        success: false,
-        message: "Authorization Error",
-      };
-    }
+
+    if (!user.success) throw new Error("Authentication Error");
+    if (user.data?.role !== Role.ADMIN) throw new Error("Authorization Error");
+
     const category = await prisma.category.create({
-      data: {
-        name,
-      },
+      data: { name },
     });
+    revalidatePath("/admin/categories");
     return {
       success: true,
       message: "Category created successfully",
       data: category,
     };
   } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Error occurred while create category",
-    };
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "Error occurred while creating category"
+    );
   }
 }
 
@@ -125,70 +110,64 @@ export async function updateCategoryById({
   data?: Category | null;
 }> {
   try {
-    if (!categoryId) {
-      return {
-        success: false,
-        message: "categoryId is required",
-      };
-    }
+    if (!categoryId) throw new Error("Category Id is required");
+    if (!name) throw new Error("Category name is required.");
+
+    const user = await getCurrentUser();
+
+    if (!user.success) throw new Error("Authentication Error");
+    if (user.data?.role !== Role.ADMIN) throw new Error("Authorization Error");
+
     const category = await prisma.category.update({
       where: {
         id: categoryId,
       },
-      data: {
-        name,
-      },
+      data: { name },
     });
+    revalidatePath("/admin/categories");
     return {
       success: true,
-      message: "Category has been updated",
+      message: "Category updated successfully",
       data: category,
     };
   } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Error occurred while updating category",
-    };
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "Error occurred while updating category"
+    );
   }
 }
 
 // Delete single category action
-export async function deleteCategoryById({
-  categoryId,
-}: {
-  categoryId: string;
-}): Promise<{
+export async function deleteCategoryById(categoryId: string): Promise<{
   success: boolean;
   message: string;
   data?: Category | null;
 }> {
   try {
-    if (!categoryId) {
-      return {
-        success: false,
-        message: "categoryId is required",
-      };
-    }
+    if (!categoryId) throw new Error("Category Id is required");
+
+    const user = await getCurrentUser();
+
+    if (!user.success) throw new Error("Authentication Error");
+    if (user.data?.role !== Role.ADMIN) throw new Error("Authorization Error");
     const category = await prisma.category.delete({
       where: {
         id: categoryId,
       },
     });
+    revalidatePath("/admin/categories");
     return {
       success: true,
-      message: "Category has been deleted.",
+      message: "Category deleted successfully",
       data: category,
     };
   } catch (error) {
-    return {
-      success: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Error occurred while deleting category",
-    };
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "Error occurred while deleting category"
+    );
   }
 }
