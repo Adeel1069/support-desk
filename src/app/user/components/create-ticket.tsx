@@ -37,6 +37,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { Category, Ticket, TicketPriority } from "@/generated/prisma";
 import { priorities } from "@/lib/constants";
+import Spinner from "@/components/spinner";
 
 const formSchema = z.object({
   subject: z
@@ -218,7 +219,7 @@ export function CreateTicket({
                 </Button>
               </DialogClose>
               <Button type="submit" disabled={loading}>
-                {loading ? "Submitting..." : "Submit"}
+                Submit {loading && <Spinner />}
               </Button>
             </DialogFooter>
           </form>

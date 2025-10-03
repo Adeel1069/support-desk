@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 
 import { getUsers } from "@/actions/user-actions";
-import EditUser from "./edit-user";
+import UpdateUser from "./update-user";
 import { auth } from "@clerk/nextjs/server";
 
 const UsersTable = async () => {
@@ -43,7 +43,7 @@ const UsersTable = async () => {
                   {userId === user.clerkId ? (
                     <></>
                   ) : (
-                    <EditUser user={user} key={user.role} />
+                    <UpdateUser user={user} key={user.role} />
                   )}
                 </TableCell>
               </TableRow>

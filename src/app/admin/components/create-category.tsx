@@ -28,7 +28,8 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { Category } from "@/generated/prisma";
 import { createCategory, updateCategoryById } from "@/actions/category-actions";
-import { Loader2, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
+import Spinner from "@/components/spinner";
 
 const formSchema = z.object({
   name: z
@@ -127,8 +128,7 @@ export function CreateCategory({
                 </Button>
               </DialogClose>
               <Button type="submit" disabled={loading}>
-                Submit{" "}
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Submit {loading && <Spinner />}
               </Button>
             </DialogFooter>
           </form>

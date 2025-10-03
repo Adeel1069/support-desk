@@ -1,6 +1,7 @@
 "use client";
 
 import { deleteCategoryById } from "@/actions/category-actions";
+import Spinner from "@/components/spinner";
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -13,7 +14,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Category } from "@/generated/prisma";
-import { Loader2, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -70,7 +71,7 @@ const DeleteCategoryButton = ({ category }: { category: Category }) => {
             onClick={deleteCategory}
           >
             Delete
-            {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {deleting && <Spinner />}
           </Button>
         </AlertDialogFooter>
       </AlertDialogContent>

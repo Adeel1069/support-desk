@@ -27,7 +27,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Role, User } from "@/generated/prisma";
-import { Loader2, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/select";
 import { userRoles } from "@/lib/constants";
 import { updateUserById } from "@/actions/user-actions";
+import Spinner from "@/components/spinner";
 
 const formSchema = z.object({
   id: z.string(),
@@ -45,7 +46,7 @@ const formSchema = z.object({
   role: z.enum(Role),
 });
 
-const EditUser = ({ user }: { user: User }) => {
+const UpdateUser = ({ user }: { user: User }) => {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
@@ -175,8 +176,7 @@ const EditUser = ({ user }: { user: User }) => {
                 </Button>
               </DialogClose>
               <Button type="submit" disabled={loading}>
-                Submit{" "}
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Submit {loading && <Spinner />}
               </Button>
             </DialogFooter>
           </form>
@@ -186,4 +186,4 @@ const EditUser = ({ user }: { user: User }) => {
   );
 };
 
-export default EditUser;
+export default UpdateUser;
