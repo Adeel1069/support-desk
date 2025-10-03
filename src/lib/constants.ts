@@ -15,3 +15,9 @@ export const priorities = [
   { value: "HIGH", label: "High" },
   { value: "CRITICAL", label: "Critical" },
 ] as const;
+
+export const userRoles = [
+  { value: "USER", label: "User" },
+  { value: "AGENT", label: "Agent" },
+  { value: "ADMIN", label: "Admin" },
+] as const;

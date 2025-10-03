@@ -13,7 +13,7 @@ import { CreateCategory } from "./create-category";
 import DeleteCategoryButton from "./delete-category";
 
 const CategoriesTable = async () => {
-  const { data } = await getCategories();
+  const { data: categories } = await getCategories();
 
   return (
     <div className="space-y-4">
@@ -29,10 +29,10 @@ const CategoriesTable = async () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data && data.length > 0 ? (
-            data.map((category) => (
+          {categories && categories.length > 0 ? (
+            categories.map((category) => (
               <TableRow key={category.id}>
-                <TableCell>{category.id}</TableCell>
+                <TableCell>{category.id.slice(0, 13)}...</TableCell>
                 <TableCell>{category.name}</TableCell>
                 <TableCell>{category.createdAt.toLocaleDateString()}</TableCell>
                 <TableCell>{category.updatedAt.toLocaleDateString()}</TableCell>
