@@ -1,12 +1,25 @@
 "use server";
 
-import { Role, User } from "@/generated/prisma";
+import { Prisma, Role, User } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "./auth-actions";
 import { revalidatePath } from "next/cache";
 
+export interface UserFilters {
+  role?: Role;
+  search?: string;
+}
+
+interface UserQueryParams {
+  filters?: UserFilters;
+  page?: number;
+  limit?: number;
+  sortBy?: "createdAt" | "updatedAt";
+  sortOrder?: "asc" | "desc";
+}
+
 // Get users action
-export async function getUsers(): Promise<{
+export async function getUsers(params: UserQueryParams = {}): Promise<{
   success: boolean;
   message: string;
   data?: User[] | [];
@@ -27,14 +40,15 @@ export async function getUsers(): Promise<{
       };
     }
 
+    const { filters = {}, sortBy = "createdAt", sortOrder = "desc" } = params;
+
+    // Dynamic where clause
+    const whereClause = buildWhereClause(currentUser.data, filters);
+
     const users = await prisma.user.findMany({
-      where: {
-        id: {
-          not: currentUser.data.id,
-        },
-      },
+      where: whereClause,
       orderBy: {
-        createdAt: "desc",
+        [sortBy]: sortOrder,
       },
     });
     return {
@@ -94,4 +108,58 @@ export async function updateUserById({
         : "Error occurred while updating user"
     );
   }
+}
+
+// Helper function to build dynamic where clause
+function buildWhereClause(
+  user: { id: string; role: string },
+  filters: UserFilters
+): Prisma.UserWhereInput {
+  const where: Prisma.UserWhereInput = {
+    AND: [],
+  };
+
+  // Admins can see all tickets (no additional restrictions)
+  const conditions: Prisma.UserWhereInput[] = [
+    // Exclude current user
+    {
+      id: {
+        not: user.id,
+      },
+    },
+  ];
+
+  // Assigned to filter
+  if (filters.role) {
+    conditions.push({
+      role: filters.role,
+    });
+  }
+
+  // Search filter (searches in subject and description)
+  if (filters.search && filters.search.trim() !== "") {
+    conditions.push({
+      OR: [
+        {
+          name: {
+            contains: filters.search,
+            mode: "insensitive",
+          },
+        },
+        {
+          email: {
+            contains: filters.search,
+            mode: "insensitive",
+          },
+        },
+      ],
+    });
+  }
+
+  // Add all conditions to AND clause
+  if (conditions.length > 0) {
+    where.AND = conditions;
+  }
+
+  return where;
 }

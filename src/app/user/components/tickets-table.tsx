@@ -30,8 +30,8 @@ const AllTickets = async () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data && data.length > 0 ? (
-            data.map((ticket) => (
+          {data && data.tickets && data.tickets.length > 0 ? (
+            data.tickets.map((ticket) => (
               <TableRow key={ticket.id}>
                 <TableCell>{ticket.subject}</TableCell>
                 <TableCell>

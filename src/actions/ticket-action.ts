@@ -1,9 +1,66 @@
 "use server";
 
-import { Prisma, Ticket, TicketPriority } from "@/generated/prisma";
+import {
+  Prisma,
+  Role,
+  Ticket,
+  TicketPriority,
+  TicketStatus,
+} from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "./auth-actions";
 import { revalidatePath } from "next/cache";
+import { DEFAULT_PAGE, DEFAULT_PAGE_LIMIT } from "@/lib/constants";
+
+export interface TicketFilters {
+  status?: TicketStatus | TicketStatus[];
+  priority?: TicketPriority | TicketPriority[];
+  assignedToId?: string;
+  categoryId?: string;
+  search?: string;
+  createdById?: string;
+  dateFrom?: Date;
+  dateTo?: Date;
+}
+
+interface TicketQueryParams {
+  filters?: TicketFilters;
+  page?: number;
+  limit?: number;
+  sortBy?: "createdAt" | "updatedAt" | "priority" | "status";
+  sortOrder?: "asc" | "desc";
+}
+
+type TicketsWithRelations = Prisma.TicketGetPayload<{
+  include: {
+    createdBy: {
+      select: {
+        id: true;
+        name: true;
+        email: true;
+      };
+    };
+    assignedTo: {
+      select: {
+        id: true;
+        name: true;
+        email: true;
+      };
+    };
+    category: {
+      select: {
+        id: true;
+        name: true;
+      };
+    };
+    _count: {
+      select: {
+        comments: true;
+        attachments: true;
+      };
+    };
+  };
+}>;
 
 type TicketWithRelations = Prisma.TicketGetPayload<{
   include: {
@@ -22,10 +79,12 @@ export async function createTicket({
   description,
   category,
   priority,
+  assignedToId,
 }: {
   subject: string;
   description: string;
   category: string;
+  assignedToId?: string;
   priority: TicketPriority;
 }): Promise<{
   success: boolean;
@@ -49,6 +108,7 @@ export async function createTicket({
         createdById: user.id,
         categoryId: category,
         priority,
+        assignedToId: user.role === Role.ADMIN ? assignedToId : null,
       },
     });
     revalidatePath(`/${user.role.toLowerCase()}/tickets`);
@@ -67,10 +127,18 @@ export async function createTicket({
 }
 
 // Get all tickets action
-export async function getTickets(): Promise<{
+export async function getTickets(params: TicketQueryParams = {}): Promise<{
   success: boolean;
   message: string;
-  data?: Ticket[] | [];
+  data?: {
+    tickets: TicketsWithRelations[];
+    pagination: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  };
 }> {
   try {
     const { success, data: user } = await getCurrentUser();
@@ -80,15 +148,75 @@ export async function getTickets(): Promise<{
         message: "Authentication Error",
       };
     }
-    const tickets = await prisma.ticket.findMany({
-      where: {
-        createdById: user.id,
-      },
-    });
+
+    const {
+      filters = {},
+      page = DEFAULT_PAGE,
+      limit = DEFAULT_PAGE_LIMIT,
+      sortBy = "createdAt",
+      sortOrder = "desc",
+    } = params;
+
+    // Dynamic where clause
+    const whereClause = buildWhereClause(user, filters);
+
+    const skip = (page - 1) * limit;
+
+    // Query Execution
+    const [tickets, total] = await Promise.all([
+      prisma.ticket.findMany({
+        where: whereClause,
+        include: {
+          createdBy: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          assignedTo: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          category: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          _count: {
+            select: {
+              comments: true,
+              attachments: true,
+            },
+          },
+        },
+        orderBy: {
+          [sortBy]: sortOrder,
+        },
+        skip,
+        take: limit,
+      }),
+      prisma.ticket.count({
+        where: whereClause,
+      }),
+    ]);
+
     return {
       success: true,
       message: "Success",
-      data: tickets,
+      data: {
+        tickets,
+        pagination: {
+          total,
+          page,
+          limit,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
     };
   } catch (error) {
     return {
@@ -148,12 +276,14 @@ export async function updateTicketById({
   category,
   priority,
   ticketId,
+  assignedToId,
 }: {
   subject: string;
   description: string;
   category: string;
   priority: TicketPriority;
   ticketId: string;
+  assignedToId: string;
 }): Promise<{
   success: boolean;
   message: string;
@@ -179,9 +309,9 @@ export async function updateTicketById({
       data: {
         subject: subject,
         description: description,
-        createdById: user.id,
         categoryId: category,
         priority,
+        assignedToId: user.role === Role.ADMIN ? assignedToId : null,
       },
     });
     revalidatePath(`/${user.role.toLowerCase()}/tickets`);
@@ -236,4 +366,111 @@ export async function deleteCategoryById({
           : "Error occurred while deleting ticket",
     };
   }
+}
+
+// Helper function to build dynamic where clause
+function buildWhereClause(
+  user: { id: string; role: string },
+  filters: TicketFilters
+): Prisma.TicketWhereInput {
+  const where: Prisma.TicketWhereInput = {
+    AND: [],
+  };
+
+  // Role-based access control
+  if (user.role !== Role.ADMIN) {
+    // Regular users can only see their own tickets
+    where.OR = [{ createdById: user.id }];
+  }
+
+  // Admins can see all tickets (no additional restrictions)
+  const conditions: Prisma.TicketWhereInput[] = [];
+
+  // Status filter
+  if (filters.status) {
+    if (Array.isArray(filters.status)) {
+      conditions.push({
+        status: { in: filters.status },
+      });
+    } else {
+      conditions.push({
+        status: filters.status,
+      });
+    }
+  }
+
+  // Priority filter
+  if (filters.priority) {
+    if (Array.isArray(filters.priority)) {
+      conditions.push({
+        priority: { in: filters.priority },
+      });
+    } else {
+      conditions.push({
+        priority: filters.priority,
+      });
+    }
+  }
+
+  // Assigned to filter
+  if (filters.assignedToId) {
+    conditions.push({
+      assignedToId: filters.assignedToId,
+    });
+  }
+
+  // Category filter
+  if (filters.categoryId) {
+    conditions.push({
+      categoryId: filters.categoryId,
+    });
+  }
+
+  // Created by filter (admin only typically)
+  if (filters.createdById && user.role === Role.ADMIN) {
+    conditions.push({
+      createdById: filters.createdById,
+    });
+  }
+
+  // Date range filter
+  if (filters.dateFrom || filters.dateTo) {
+    const dateFilter: Prisma.DateTimeFilter = {};
+    if (filters.dateFrom) {
+      dateFilter.gte = filters.dateFrom;
+    }
+    if (filters.dateTo) {
+      dateFilter.lte = filters.dateTo;
+    }
+    conditions.push({
+      createdAt: dateFilter,
+    });
+  }
+
+  // Search filter (searches in subject and description)
+  if (filters.search && filters.search.trim() !== "") {
+    conditions.push({
+      OR: [
+        {
+          subject: {
+            contains: filters.search,
+            mode: "insensitive",
+          },
+        },
+        {
+          description: {
+            contains: filters.search,
+            mode: "insensitive",
+          },
+        },
+      ],
+    });
+  }
+
+  // Add all conditions to AND clause
+  if (conditions.length > 0) {
+    where.AND = conditions;
+  }
+
+  return where;
 }
