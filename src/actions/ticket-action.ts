@@ -283,7 +283,7 @@ export async function updateTicketById({
   category: string;
   priority: TicketPriority;
   ticketId: string;
-  assignedToId: string;
+  assignedToId?: string;
 }): Promise<{
   success: boolean;
   message: string;
@@ -311,7 +311,8 @@ export async function updateTicketById({
         description: description,
         categoryId: category,
         priority,
-        assignedToId: user.role === Role.ADMIN ? assignedToId : null,
+        assignedToId:
+          user.role === Role.ADMIN && assignedToId ? assignedToId : null,
       },
     });
     revalidatePath(`/${user.role.toLowerCase()}/tickets`);
@@ -378,9 +379,13 @@ function buildWhereClause(
   };
 
   // Role-based access control
-  if (user.role !== Role.ADMIN) {
+  if (user.role === Role.USER) {
     // Regular users can only see their own tickets
     where.OR = [{ createdById: user.id }];
+  }
+  if (user.role === Role.AGENT) {
+    // Regular users can only see their own tickets
+    where.OR = [{ assignedToId: user.id }];
   }
 
   // Admins can see all tickets (no additional restrictions)

@@ -6,22 +6,13 @@ import { Separator } from "@/components/ui/separator";
 
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { CreateTicket } from "../../components/create-ticket";
-import { getCategories } from "@/actions/category-actions";
 import { getTicketById } from "@/actions/ticket-action";
-import { getCurrentUser } from "@/actions/auth-actions";
-import { Role } from "@/generated/prisma";
-import { getUsers } from "@/actions/user-actions";
 
 const TicketDetailsPage = async ({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) => {
-  const { data: categories } = await getCategories();
-  const { data: currentUser } = await getCurrentUser();
-  console.log("TCL: currentUser", currentUser);
-  const { data: users } = await getUsers({ filters: { role: Role.AGENT } });
   const { id } = await params;
   const { data: ticket } = await getTicketById(id);
 
@@ -33,17 +24,11 @@ const TicketDetailsPage = async ({
     <main className="p-10 max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link href="/admin/tickets">
+          <Link href="/agent/tickets">
             <ArrowLeft />
           </Link>
           <h1 className="text-2xl font-bold">Ticket Details</h1>
         </div>
-        <CreateTicket
-          categories={categories || []}
-          users={users || []}
-          editMode={true}
-          ticket={ticket}
-        />
       </div>
       {/* Header */}
       <Card>
@@ -64,10 +49,7 @@ const TicketDetailsPage = async ({
             </p>
             <p>
               <span className="font-semibold">Created By: </span>
-              {ticket.createdBy?.name || ticket.createdBy?.email}{" "}
-              <span className="text-sm text-muted-foreground">
-                {currentUser?.id === ticket.createdBy.id && "(Admin)"}
-              </span>
+              {ticket.createdBy?.name || ticket.createdBy?.email}
             </p>
             <p>
               <span className="font-semibold">Assigned To: </span>
