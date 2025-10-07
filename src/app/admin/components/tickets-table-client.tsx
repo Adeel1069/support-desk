@@ -300,7 +300,7 @@ const TicketsTableClient = ({
                       ticket={ticket}
                     />
                     <Link
-                      href={`/user/tickets/${ticket.id}`}
+                      href={`/admin/tickets/${ticket.id}`}
                       className="inline-flex items-center justify-center hover:bg-accent hover:text-accent-foreground h-9 w-9 rounded-md transition-colors"
                     >
                       <ArrowRight className="h-4 w-4" />

@@ -1,3 +1,5 @@
+"use client";
+
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -62,14 +64,14 @@ type CreateTicketProps =
       ticket: Ticket;
       categories: Category[];
       users: User[];
-      onSuccess: () => void;
+      onSuccess?: () => void;
     }
   | {
       editMode?: false;
       ticket?: undefined;
       categories: Category[];
       users: User[];
-      onSuccess: () => void;
+      onSuccess?: () => void;
     };
 
 export function CreateTicket({
@@ -79,17 +81,19 @@ export function CreateTicket({
   ticket,
   onSuccess,
 }: CreateTicketProps) {
+  const defaultValues = {
+    subject: ticket?.subject || "",
+    description: ticket?.description || "",
+    category: ticket?.categoryId || "",
+    assignedToId: ticket?.assignedToId || "",
+    priority: ticket?.priority || priorities[0].value,
+  };
+
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      subject: ticket?.subject || "",
-      description: ticket?.description || "",
-      category: ticket?.categoryId || "",
-      assignedToId: ticket?.assignedToId || "",
-      priority: ticket?.priority || priorities[0].value,
-    },
+    defaultValues,
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -102,8 +106,8 @@ export function CreateTicket({
       success: (data) => {
         setLoading(false);
         setOpen(false);
-        form.reset();
-        onSuccess();
+        form.reset(defaultValues);
+        if (onSuccess) onSuccess();
         return data?.message;
       },
       error: (err) => {
