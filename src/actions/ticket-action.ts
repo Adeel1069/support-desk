@@ -73,6 +73,15 @@ type TicketWithRelations = Prisma.TicketGetPayload<{
   };
 }>;
 
+export interface TicketsCount {
+  open: number;
+  closed: number;
+  resolved: number;
+  archived: number;
+  inProgress: number;
+  total: number;
+}
+
 // Create Ticket action
 export async function createTicket({
   subject,
@@ -365,6 +374,71 @@ export async function deleteCategoryById({
         error instanceof Error
           ? error.message
           : "Error occurred while deleting ticket",
+    };
+  }
+}
+
+export async function getTicketCounts(): Promise<{
+  success: boolean;
+  message: string;
+  data?: TicketsCount | null;
+}> {
+  try {
+    const { data: user, success } = await getCurrentUser();
+    if (!success || !user || !user.id) {
+      throw new Error("Unauthenticated");
+    }
+
+    // Where clause based on user role
+    let whereClause = {};
+
+    if (user.role === Role.USER) {
+      whereClause = { createdById: user.id };
+    } else if (user.role === Role.AGENT) {
+      whereClause = { assignedToId: user.id };
+    }
+
+    // Count tickets by status
+    const [open, inProgress, resolved, closed, archived, total] =
+      await Promise.all([
+        prisma.ticket.count({
+          where: { ...whereClause, status: TicketStatus.OPEN },
+        }),
+        prisma.ticket.count({
+          where: { ...whereClause, status: TicketStatus.IN_PROGRESS },
+        }),
+        prisma.ticket.count({
+          where: { ...whereClause, status: TicketStatus.RESOLVED },
+        }),
+        prisma.ticket.count({
+          where: { ...whereClause, status: TicketStatus.CLOSED },
+        }),
+        prisma.ticket.count({
+          where: { ...whereClause, status: TicketStatus.ARCHIVED },
+        }),
+        prisma.ticket.count({
+          where: whereClause,
+        }),
+      ]);
+
+    const counts: TicketsCount = {
+      open,
+      inProgress,
+      resolved,
+      closed,
+      archived,
+      total,
+    };
+
+    return {
+      success: true,
+      message: "Ticket counts fetched successfully",
+      data: counts,
+    };
+  } catch {
+    return {
+      success: false,
+      message: "Error occurred while fetching counts",
     };
   }
 }

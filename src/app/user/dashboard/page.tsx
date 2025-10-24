@@ -1,9 +1,11 @@
 import { getCurrentUser } from "@/actions/auth-actions";
-import RecentTickets from "../components/recent-tickets";
-import Stats from "../components/stats";
+import { getTicketCounts } from "@/actions/ticket-action";
+import AllTickets from "../components/tickets-table";
+import TicketStats from "@/components/tickets-stats";
 
 const UserDashboard = async () => {
   const { data: user } = await getCurrentUser();
+  const { data: counts } = await getTicketCounts();
   return (
     <main className="p-10 max-w-6xl mx-auto">
       <div className="space-y-10">
@@ -14,8 +16,8 @@ const UserDashboard = async () => {
             👋
           </h1>
         </div>
-        <Stats />
-        <RecentTickets />
+        <TicketStats counts={counts || null} />
+        <AllTickets isRecentTable />
       </div>
     </main>
   );

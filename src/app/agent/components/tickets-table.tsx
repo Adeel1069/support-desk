@@ -1,6 +1,7 @@
 import { getTickets } from "@/actions/ticket-action";
 import PriorityChip from "@/components/priority-chip";
 import StatusChip from "@/components/status-chip";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -12,11 +13,21 @@ import {
 } from "@/components/ui/table";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-const TicketsTable = async () => {
+const TicketsTable = async ({ isRecentTable }: { isRecentTable: boolean }) => {
   const { data } = await getTickets();
   return (
     <div className="space-y-4">
-      <Input placeholder="Search My Tickets..." className="max-w-sm" />
+      {!isRecentTable && (
+        <Input placeholder="Search My Tickets..." className="max-w-sm" />
+      )}
+      {isRecentTable && (
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-semibold">Recent Tickets</h2>
+          <Button variant="link">
+            <Link href="/user/tickets">View All Tickets →</Link>
+          </Button>
+        </div>
+      )}
       <Table>
         <TableHeader>
           <TableRow>
